@@ -1,0 +1,153 @@
+{
+  "name": "aws-feed",
+  "label": "AWS Feed",
+  "description": "AWS Feed Integration",
+  "publisher": "Fortinet",
+  "cs_approved": true,
+  "cs_compatible": true,
+  "version": "1.0.0",
+  "category": "Threat Intelligence",
+  "tags": [
+    "threatintel-inbound"
+  ],
+  "ingestion_supported": true,
+  "ingestion_modes": [
+    "scheduled"
+  ],
+  "ingestion_preferences": {
+    "modules": [
+      "threat_intel_feeds"
+    ]
+  },
+  "help_online": "",
+  "icon_small_name": "small.png",
+  "icon_large_name": "large.png",
+  "configuration": {
+    "fields": [
+      {
+        "title": "Server URL",
+        "required": true,
+        "editable": true,
+        "visible": true,
+        "type": "text",
+        "name": "server_url",
+        "placeholder": "e.g https://ip-ranges.amazonaws.com/ip-ranges.json",
+        "value": "https://ip-ranges.amazonaws.com/ip-ranges.json",
+        "description": "Server url to get AWS feeds data"
+      },
+      {
+        "title": "AWS Service",
+        "required": false,
+        "editable": true,
+        "visible": true,
+        "type": "multiselect",
+        "options": [
+          "AMAZON",
+          "AMAZON_APPFLOW",
+          "AMAZON_CONNECT",
+          "API_GATEWAY",
+          "CHIME_MEETINGS",
+          "CHIME_VOICECONNECTOR",
+          "CLOUD9",
+          "CLOUDFRONT",
+          "CLOUDFRONT_ORIGIN_FACING",
+          "CODEBUILD",
+          "DYNAMODB",
+          "EBS",
+          "EC2",
+          "EC2_INSTANCE_CONNECT",
+          "GLOBALACCELERATOR",
+          "KINESIS_VIDEO_STREAMS",
+          "ROUTE53",
+          "ROUTE53_HEALTHCHECKS",
+          "ROUTE53_HEALTHCHECKS_PUBLISHING",
+          "ROUTE53_RESOLVER",
+          "S3",
+          "WORKSPACES_GATEWAYS"
+        ],
+        "name": "aws_services",
+        "tooltip": "Select AWS service for which you wants to get data",
+        "description": "Select AWS service for which you wants to get data"
+      },
+      {
+        "title": "AWS Regions",
+        "required": false,
+        "editable": true,
+        "visible": true,
+        "type": "multiselect",
+        "options": [
+          "ap-east-1",
+          "ap-northeast-1",
+          "ap-northeast-2",
+          "ap-northeast-3",
+          "ap-south-1",
+          "ap-southeast-1",
+          "ap-southeast-2",
+          "ca-central-1",
+          "cn-north-1",
+          "cn-northwest-1",
+          "eu-central-1",
+          "eu-north-1",
+          "eu-west-1",
+          "eu-west-2",
+          "eu-west-3",
+          "sa-east-1",
+          "us-east-1",
+          "us-east-2",
+          "us-gov-east-1",
+          "us-gov-west-1",
+          "us-west-1",
+          "us-west-2",
+          "GLOBAL"
+        ],
+        "name": "aws_regions",
+        "tooltip": "Select AWS region for which you wants to get data",
+        "description": "Select AWS region for which you wants to get data"
+      },
+      {
+        "title": "Verify SSL",
+        "description": "Specifies whether the SSL certificate is to be verified or not.By default, this option is set as True.",
+        "required": false,
+        "editable": true,
+        "visible": true,
+        "type": "checkbox",
+        "name": "verify_ssl",
+        "value": true
+      }
+    ]
+  },
+  "operations": [
+    {
+      "operation": "get_indicators",
+      "title": "Get Indicators",
+      "category": "investigation",
+      "annotation": "get_indicators",
+      "description": "Retrieve list of all indicators form AWS feed",
+      "parameters": [
+      ],
+      "enabled": true,
+      "output_schema": {
+        "syncToken": "",
+        "createDate": "",
+        "prefixes": [
+          {
+            "ip_prefix": "",
+            "region": "",
+            "network_border_group": "",
+            "service": ""
+          }
+        ],
+        "ipv6_prefixes": [
+          {
+            "ipv6_prefix": "",
+            "region": "",
+            "network_border_group": "",
+            "service": ""
+          }
+        ]
+      }
+    }
+  ]
+}
+
+
