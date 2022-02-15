@@ -16,7 +16,8 @@
   ],
   "ingestion_preferences": {
     "modules": [
-      "threat_intel_feeds"
+      "threat_intel_feeds",
+      "indicators"
     ]
   },
   "help_online": "",
