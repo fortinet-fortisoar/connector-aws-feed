@@ -126,11 +126,61 @@
             "lastPullTime"
           ],
           "synchronous": false,
-          "lastModifyDate": 1645594011,
+          "lastModifyDate": 1645697655,
           "collection": "/api/3/workflow_collections/06ea4537-cfb2-4131-b3e1-0b1377b9ae73",
           "versions": [],
-          "triggerStep": "/api/3/workflow_steps/e379f921-aa15-42eb-9343-2f036324a5a8",
+          "triggerStep": "/api/3/workflow_steps/d7f78bd7-2f9c-4078-bb06-dbf132962090",
           "steps": [
+            {
+              "@type": "WorkflowStep",
+              "name": "Create Feed List",
+              "description": null,
+              "arguments": {
+                "data": "{{vars.steps.Get_Indicators.data.prefixes + vars.steps.Get_Indicators.data.ipv6_prefixes}}",
+                "currentPullTime": "{{vars.steps.Get_Indicators.data.createDate}}"
+              },
+              "status": null,
+              "top": "360",
+              "left": "780",
+              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
+              "uuid": "0207a002-f452-494c-85b0-a36b1a2a84ae"
+            },
+            {
+              "@type": "WorkflowStep",
+              "name": "Resolve Range",
+              "description": null,
+              "arguments": {
+                "tlp_resolved": "{{vars.tlp | resolveRange(vars.tlp_map)}}",
+                "reputation_resolved": "{{vars.reputation | resolveRange(vars.reputation_map)}}"
+              },
+              "status": null,
+              "top": "280",
+              "left": "40",
+              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
+              "uuid": "268dc57b-c849-49a4-90e2-5b97a34c6762"
+            },
+            {
+              "@type": "WorkflowStep",
+              "name": "Configuration",
+              "description": null,
+              "arguments": {
+                "tlp": "White",
+                "expiry": 90,
+                "tlp_map": "{'Red': {{'TrafficLightProtocol'| picklist('Red') }}, 'Amber': {{'TrafficLightProtocol'| picklist('Amber') }}, 'Green': {{'TrafficLightProtocol'| picklist('Green') }}, 'White': {{'TrafficLightProtocol'| picklist('White') }}}",
+                "confidence": 90,
+                "reputation": "Good",
+                "reputation_map": "{'Good': {{'IndicatorReputation'| picklist('Good') }}, 'Malicious': {{'IndicatorReputation'| picklist('Malicious') }}, 'Suspicious': {{'IndicatorReputation'| picklist('Suspicious') }}, 'TBD': {{'IndicatorReputation'| picklist('TBD') }}, 'No Reputation Available': {{'IndicatorReputation'| picklist('No Reputation Available') }}}",
+                "threat_intel_feeds_tLP_map": "{}",
+                "threat_intel_feeds_reputation_map": "{}",
+                "threat_intel_feeds_typeOfFeed_map": "{}",
+                "threat_intelligence_typeofindicator_map": "{'domain-name-value': {{'ThreatIntelFeedType'| picklist('Domain') }}, 'file-name': {{'ThreatIntelFeedType'| picklist('Filename') }}, 'file-hashes-MD5': {{'ThreatIntelFeedType'| picklist('FileHash-MD5') }}, 'file-hashes-SHA-1': {{'ThreatIntelFeedType'| picklist('FileHash-SHA1') }}, 'file-hashes-SHA-256': {{'ThreatIntelFeedType'| picklist('FileHash-SHA256') }}, 'ipv4-addr-value': {{'ThreatIntelFeedType'| picklist('IPv4 Address') }}, 'ipv6-addr-value': {{'ThreatIntelFeedType'| picklist('IPv6 Address') }}, 'windows-registry-key-key': {{'ThreatIntelFeedType'| picklist('Registry') }}, 'process-name': {{'ThreatIntelFeedType'| picklist('Process') }}, 'url-value': {{'ThreatIntelFeedType'| picklist('URL') }}, 'user-account-value': {{'ThreatIntelFeedType'| picklist('User') }}, 'email-message-from_ref-value': {{'ThreatIntelFeedType'| picklist('Email Address') }}, 'email-message-sender_ref-value': {{'ThreatIntelFeedType'| picklist('Email Address') }} }"
+              },
+              "status": null,
+              "top": "160",
+              "left": "40",
+              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
+              "uuid": "397ced24-40e1-41d7-b863-8c0f4a4f197d"
+            },
             {
               "@type": "WorkflowStep",
               "name": "Save Result",
@@ -139,10 +189,81 @@
                 "currentPullTime": "{{vars.currentPullTime}}"
               },
               "status": null,
-              "top": "500",
-              "left": "1140",
+              "top": "480",
+              "left": "1280",
               "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
-              "uuid": "a1b14baf-82e3-43a1-ad49-a5b96cbc422e"
+              "uuid": "40f24b43-0d05-45be-ae11-ca6a0f312953"
+            },
+            {
+              "@type": "WorkflowStep",
+              "name": "Create Record",
+              "description": null,
+              "arguments": {
+                "for_each": {
+                  "item": "{{vars.data}}",
+                  "__bulk": true,
+                  "parallel": false,
+                  "condition": "",
+                  "batch_size": 100
+                },
+                "resource": {
+                  "tLP": "{% if vars.tlp %}{{ vars.tlp | resolveRange(vars.tlp_map)}}{% endif %}",
+                  "value": "{{vars.item.ip_prefix or vars.item.ipv6_prefix}}",
+                  "source": "AWS Feed",
+                  "__replace": "",
+                  "expiresOn": "{% if vars.expiry %}{{ arrow.get(vars.currentPullTime[:10]).int_timestamp + (vars.expiry | int)*24*60*60 }}{% else %}None{% endif %}",
+                  "confidence": "{% if vars.confidence %}{{ vars.confidence }}{% else %}{{ vars.item.labels[2].split(\"-\")[-1] }}{% endif %}",
+                  "reputation": "{% if vars.reputation %}{{ vars.reputation | resolveRange(vars.reputation_map)}}{% else %}{{ vars.item.labels[1].split(\"-\")[-1] | resolveRange(vars.reputation_map) }}{% endif %}",
+                  "sourceData": "{{vars.item | toJSON}}",
+                  "typeOfFeed": "/api/3/picklists/b788efc2-dadb-4448-9018-043b37266de4"
+                },
+                "_showJson": false,
+                "collection": "/api/ingest-feeds/threat_intel_feeds",
+                "__recommend": [],
+                "step_variables": []
+              },
+              "status": null,
+              "top": "380",
+              "left": "1100",
+              "stepType": "/api/3/workflow_step_types/7b221880-716b-4726-a2ca-5e568d330b3e",
+              "uuid": "44deb7e7-5fc8-4c66-8598-a283ba5220b8"
+            },
+            {
+              "@type": "WorkflowStep",
+              "name": "Return Sample Data",
+              "description": null,
+              "arguments": {
+                "data": "[\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"52.95.226.0/24\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"52.94.249.144/28\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"15.177.86.0/24\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"18.163.0.0/16\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"54.240.17.0/24\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ipv6_prefix\": \"2406:da70:e000::/40\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ipv6_prefix\": \"2406:da1e::/32\",\n    \"network_border_group\": \"ap-east-1\"\n  }\n]"
+              },
+              "status": null,
+              "top": "220",
+              "left": "980",
+              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
+              "uuid": "70a371ca-fbbb-494a-ae66-6db792a5c334"
+            },
+            {
+              "@type": "WorkflowStep",
+              "name": "Compare Last Pull Time",
+              "description": null,
+              "arguments": {
+                "conditions": [
+                  {
+                    "step_iri": "/api/3/workflow_steps/44deb7e7-5fc8-4c66-8598-a283ba5220b8",
+                    "condition": "{{ vars.input.params.lastPullTime != vars.currentPullTime }}",
+                    "step_name": "Create Record"
+                  },
+                  {
+                    "default": true,
+                    "step_iri": "/api/3/workflow_steps/40f24b43-0d05-45be-ae11-ca6a0f312953",
+                    "step_name": "Save Result"
+                  }
+                ]
+              },
+              "status": null,
+              "top": "480",
+              "left": "780",
+              "stepType": "/api/3/workflow_step_types/12254cf5-5db7-4b1a-8cb1-3af081924b28",
+              "uuid": "8aa77230-1550-4458-8ede-2d4fb39cfa4d"
             },
             {
               "@type": "WorkflowStep",
@@ -165,42 +286,33 @@
               "top": "340",
               "left": "460",
               "stepType": "/api/3/workflow_step_types/0bfed618-0316-11e7-93ae-92361f002671",
-              "uuid": "9f4d1b2a-4ca4-48c8-85a6-62a0505b5bc0"
+              "uuid": "c4012035-f735-40c2-9c25-161942ed757a"
             },
             {
               "@type": "WorkflowStep",
-              "name": "Configuration",
+              "name": "Is data only for mapping",
               "description": null,
               "arguments": {
-                "tlp": "Amber",
-                "expiry": "",
-                "tlp_map": "{'Red': {{'TrafficLightProtocol'| picklist('Red') }}, 'Amber': {{'TrafficLightProtocol'| picklist('Amber') }}, 'Green': {{'TrafficLightProtocol'| picklist('Green') }}, 'White': {{'TrafficLightProtocol'| picklist('White') }}}",
-                "confidence": 90,
-                "reputation": "Good",
-                "reputation_map": "{'Good': {{'IndicatorReputation'| picklist('Good') }}, 'Malicious': {{'IndicatorReputation'| picklist('Malicious') }}, 'Suspicious': {{'IndicatorReputation'| picklist('Suspicious') }}, 'TBD': {{'IndicatorReputation'| picklist('TBD') }}, 'No Reputation Available': {{'IndicatorReputation'| picklist('No Reputation Available') }}}",
-                "threat_intel_feeds_tLP_map": "{}",
-                "threat_intel_feeds_reputation_map": "{}",
-                "threat_intel_feeds_typeOfFeed_map": "{}",
-                "threat_intelligence_typeofindicator_map": "{'domain-name-value': {{'ThreatIntelFeedType'| picklist('Domain') }}, 'file-name': {{'ThreatIntelFeedType'| picklist('Filename') }}, 'file-hashes-MD5': {{'ThreatIntelFeedType'| picklist('FileHash-MD5') }}, 'file-hashes-SHA-1': {{'ThreatIntelFeedType'| picklist('FileHash-SHA1') }}, 'file-hashes-SHA-256': {{'ThreatIntelFeedType'| picklist('FileHash-SHA256') }}, 'ipv4-addr-value': {{'ThreatIntelFeedType'| picklist('IPv4 Address') }}, 'ipv6-addr-value': {{'ThreatIntelFeedType'| picklist('IPv6 Address') }}, 'windows-registry-key-key': {{'ThreatIntelFeedType'| picklist('Registry') }}, 'process-name': {{'ThreatIntelFeedType'| picklist('Process') }}, 'url-value': {{'ThreatIntelFeedType'| picklist('URL') }}, 'user-account-value': {{'ThreatIntelFeedType'| picklist('User') }}, 'email-message-from_ref-value': {{'ThreatIntelFeedType'| picklist('Email Address') }}, 'email-message-sender_ref-value': {{'ThreatIntelFeedType'| picklist('Email Address') }} }"
+                "conditions": [
+                  {
+                    "option": "Yes, For Mapping",
+                    "step_iri": "/api/3/workflow_steps/70a371ca-fbbb-494a-ae66-6db792a5c334",
+                    "condition": "{{ vars.request.env_setup == true }}",
+                    "step_name": "Return Sample Data"
+                  },
+                  {
+                    "option": "No, For Ingestion",
+                    "default": true,
+                    "step_iri": "/api/3/workflow_steps/c4012035-f735-40c2-9c25-161942ed757a",
+                    "step_name": "Get Indicators"
+                  }
+                ]
               },
               "status": null,
-              "top": "160",
-              "left": "40",
-              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
-              "uuid": "5cd1d439-bdf4-4748-9ace-185c3501648e"
-            },
-            {
-              "@type": "WorkflowStep",
-              "name": "Return Sample Data",
-              "description": null,
-              "arguments": {
-                "data": "[\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"52.95.226.0/24\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"52.94.249.144/28\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"15.177.86.0/24\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"18.163.0.0/16\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ip_prefix\": \"54.240.17.0/24\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ipv6_prefix\": \"2406:da70:e000::/40\",\n    \"network_border_group\": \"ap-east-1\"\n  },\n  {\n    \"region\": \"ap-east-1\",\n    \"service\": \"EC2\",\n    \"ipv6_prefix\": \"2406:da1e::/32\",\n    \"network_border_group\": \"ap-east-1\"\n  }\n]"
-              },
-              "status": null,
-              "top": "220",
-              "left": "980",
-              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
-              "uuid": "735869e8-9f11-46b6-a2d2-560f32e0cba0"
+              "top": "140",
+              "left": "460",
+              "stepType": "/api/3/workflow_step_types/12254cf5-5db7-4b1a-8cb1-3af081924b28",
+              "uuid": "d155cf88-e875-4dec-ae6d-36d30802853b"
             },
             {
               "@type": "WorkflowStep",
@@ -218,226 +330,114 @@
               "top": "40",
               "left": "40",
               "stepType": "/api/3/workflow_step_types/b348f017-9a94-471f-87f8-ce88b6a7ad62",
-              "uuid": "e379f921-aa15-42eb-9343-2f036324a5a8"
-            },
-            {
-              "@type": "WorkflowStep",
-              "name": "Is data only for mapping",
-              "description": null,
-              "arguments": {
-                "conditions": [
-                  {
-                    "option": "Yes, For Mapping",
-                    "step_iri": "/api/3/workflow_steps/735869e8-9f11-46b6-a2d2-560f32e0cba0",
-                    "condition": "{{ vars.request.env_setup == true }}",
-                    "step_name": "Return Sample Data"
-                  },
-                  {
-                    "option": "No, For Ingestion",
-                    "default": true,
-                    "step_iri": "/api/3/workflow_steps/9f4d1b2a-4ca4-48c8-85a6-62a0505b5bc0",
-                    "step_name": "Get Indicators"
-                  }
-                ]
-              },
-              "status": null,
-              "top": "140",
-              "left": "460",
-              "stepType": "/api/3/workflow_step_types/12254cf5-5db7-4b1a-8cb1-3af081924b28",
-              "uuid": "c8c2a9d9-c442-4413-8a74-7ecf9c2d2912"
-            },
-            {
-              "@type": "WorkflowStep",
-              "name": "Resolve Range",
-              "description": null,
-              "arguments": {
-                "tlp_resolved": "{{vars.tlp | resolveRange(vars.tlp_map)}}",
-                "reputation_resolved": "{{vars.reputation | resolveRange(vars.reputation_map)}}"
-              },
-              "status": null,
-              "top": "280",
-              "left": "40",
-              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
-              "uuid": "8678e19e-b410-4cd6-8e88-236f2239c128"
-            },
-            {
-              "@type": "WorkflowStep",
-              "name": "Create Feed List",
-              "description": null,
-              "arguments": {
-                "data": "{{vars.steps.Get_Indicators.data.prefixes + vars.steps.Get_Indicators.data.ipv6_prefixes}}",
-                "currentPullTime": "{{vars.steps.Get_Indicators.data.createDate}}"
-              },
-              "status": null,
-              "top": "340",
-              "left": "780",
-              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
-              "uuid": "768fac14-ffed-424b-9feb-38cf37815a1f"
-            },
-            {
-              "@type": "WorkflowStep",
-              "name": "Create Record",
-              "description": null,
-              "arguments": {
-                "for_each": {
-                  "item": "{{vars.data}}",
-                  "__bulk": true,
-                  "parallel": false,
-                  "condition": "",
-                  "batch_size": 100
-                },
-                "resource": {
-                  "tLP": "{% if vars.tlp %}{{ vars.tlp | resolveRange(vars.tlp_map)}}{% endif %}",
-                  "value": "{{vars.item.ip_prefix or vars.item.ipv6_prefix}}",
-                  "source": "AWS Feed",
-                  "__replace": "",
-                  "expiresOn": "{% if vars.expiry %}{{ arrow.get(vars.item.valid_from).int_timestamp + (vars.expiry | int)*24*60*60 }}{% else %}None{% endif %}",
-                  "confidence": "{% if vars.confidence %}{{ vars.confidence }}{% else %}{{ vars.item.labels[2].split(\"-\")[-1] }}{% endif %}",
-                  "reputation": "{% if vars.reputation %}{{ vars.reputation | resolveRange(vars.reputation_map)}}{% else %}{{ vars.item.labels[1].split(\"-\")[-1] | resolveRange(vars.reputation_map) }}{% endif %}",
-                  "sourceData": "{{vars.item | toJSON}}",
-                  "typeOfFeed": "/api/3/picklists/b788efc2-dadb-4448-9018-043b37266de4"
-                },
-                "_showJson": false,
-                "collection": "/api/ingest-feeds/threat_intel_feeds",
-                "__recommend": [],
-                "step_variables": []
-              },
-              "status": null,
-              "top": "340",
-              "left": "1140",
-              "stepType": "/api/3/workflow_step_types/7b221880-716b-4726-a2ca-5e568d330b3e",
-              "uuid": "65cb7bd3-77af-41af-989f-fbb0a0f146cf"
-            },
-            {
-              "@type": "WorkflowStep",
-              "name": "Compare Last Pull Time",
-              "description": null,
-              "arguments": {
-                "conditions": [
-                  {
-                    "step_iri": "/api/3/workflow_steps/65cb7bd3-77af-41af-989f-fbb0a0f146cf",
-                    "condition": "{{ vars.input.params.lastPullTime != vars.currentPullTime }}",
-                    "step_name": "Create Record"
-                  },
-                  {
-                    "default": true,
-                    "step_iri": "/api/3/workflow_steps/a1b14baf-82e3-43a1-ad49-a5b96cbc422e",
-                    "step_name": "Save Result"
-                  }
-                ]
-              },
-              "status": null,
-              "top": "480",
-              "left": "780",
-              "stepType": "/api/3/workflow_step_types/12254cf5-5db7-4b1a-8cb1-3af081924b28",
-              "uuid": "92a79cd0-748e-44cf-ab85-e6c97ee71fb9"
+              "uuid": "d7f78bd7-2f9c-4078-bb06-dbf132962090"
             }
           ],
           "routes": [
             {
               "@type": "WorkflowRoute",
               "name": "Get Indicators -> Create Feed List",
-              "targetStep": "/api/3/workflow_steps/768fac14-ffed-424b-9feb-38cf37815a1f",
-              "sourceStep": "/api/3/workflow_steps/9f4d1b2a-4ca4-48c8-85a6-62a0505b5bc0",
+              "targetStep": "/api/3/workflow_steps/0207a002-f452-494c-85b0-a36b1a2a84ae",
+              "sourceStep": "/api/3/workflow_steps/c4012035-f735-40c2-9c25-161942ed757a",
               "label": null,
               "isExecuted": false,
-              "uuid": "166902cc-3170-40fd-8418-4653e29f045f"
+              "uuid": "72b4fe3b-1b59-41f8-8c31-856574d5d027"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Create Record -> Save Result",
-              "targetStep": "/api/3/workflow_steps/a1b14baf-82e3-43a1-ad49-a5b96cbc422e",
-              "sourceStep": "/api/3/workflow_steps/65cb7bd3-77af-41af-989f-fbb0a0f146cf",
+              "targetStep": "/api/3/workflow_steps/40f24b43-0d05-45be-ae11-ca6a0f312953",
+              "sourceStep": "/api/3/workflow_steps/44deb7e7-5fc8-4c66-8598-a283ba5220b8",
               "label": null,
               "isExecuted": false,
-              "uuid": "b12f12d5-9ee5-4145-9345-bb79314a1024"
+              "uuid": "7ad7d9ff-7738-4ee4-8cd9-1ddda1357ee8"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Is data only for mapping -> Get Indicators",
-              "targetStep": "/api/3/workflow_steps/9f4d1b2a-4ca4-48c8-85a6-62a0505b5bc0",
-              "sourceStep": "/api/3/workflow_steps/c8c2a9d9-c442-4413-8a74-7ecf9c2d2912",
+              "targetStep": "/api/3/workflow_steps/c4012035-f735-40c2-9c25-161942ed757a",
+              "sourceStep": "/api/3/workflow_steps/d155cf88-e875-4dec-ae6d-36d30802853b",
               "label": "No, For Ingestion",
               "isExecuted": false,
-              "uuid": "0354895f-f3f3-4f82-ab9d-6b68460ae0c9"
+              "uuid": "8faad872-6d4b-4c2c-97a4-f5525a16fc53"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Resolve Range -> Is data only for mapping",
-              "targetStep": "/api/3/workflow_steps/c8c2a9d9-c442-4413-8a74-7ecf9c2d2912",
-              "sourceStep": "/api/3/workflow_steps/8678e19e-b410-4cd6-8e88-236f2239c128",
+              "targetStep": "/api/3/workflow_steps/d155cf88-e875-4dec-ae6d-36d30802853b",
+              "sourceStep": "/api/3/workflow_steps/268dc57b-c849-49a4-90e2-5b97a34c6762",
               "label": null,
               "isExecuted": false,
-              "uuid": "c9357d45-cc88-4aea-b085-3257716cc484"
+              "uuid": "5e286e2e-91e8-4f35-ab16-fe0ed70a9857"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Configuration -> Resolve Range",
-              "targetStep": "/api/3/workflow_steps/8678e19e-b410-4cd6-8e88-236f2239c128",
-              "sourceStep": "/api/3/workflow_steps/5cd1d439-bdf4-4748-9ace-185c3501648e",
+              "targetStep": "/api/3/workflow_steps/268dc57b-c849-49a4-90e2-5b97a34c6762",
+              "sourceStep": "/api/3/workflow_steps/397ced24-40e1-41d7-b863-8c0f4a4f197d",
               "label": null,
               "isExecuted": false,
-              "uuid": "248b9941-563a-4cee-8223-764ecbcf0c45"
+              "uuid": "8a56101c-4798-4e68-b99a-e308f7707d1b"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Is data only for mapping -> Return Sample Data",
-              "targetStep": "/api/3/workflow_steps/735869e8-9f11-46b6-a2d2-560f32e0cba0",
-              "sourceStep": "/api/3/workflow_steps/c8c2a9d9-c442-4413-8a74-7ecf9c2d2912",
+              "targetStep": "/api/3/workflow_steps/70a371ca-fbbb-494a-ae66-6db792a5c334",
+              "sourceStep": "/api/3/workflow_steps/d155cf88-e875-4dec-ae6d-36d30802853b",
               "label": "Yes, For Mapping",
               "isExecuted": false,
-              "uuid": "2b5abb1e-c0e9-42bb-a8c0-ff91b290bc73"
+              "uuid": "1850a01f-eef8-4173-acba-0c1a562326c2"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Start -> Configuration",
-              "targetStep": "/api/3/workflow_steps/5cd1d439-bdf4-4748-9ace-185c3501648e",
-              "sourceStep": "/api/3/workflow_steps/e379f921-aa15-42eb-9343-2f036324a5a8",
+              "targetStep": "/api/3/workflow_steps/397ced24-40e1-41d7-b863-8c0f4a4f197d",
+              "sourceStep": "/api/3/workflow_steps/d7f78bd7-2f9c-4078-bb06-dbf132962090",
               "label": null,
               "isExecuted": false,
-              "uuid": "1c07e26c-ae14-4848-b7da-253f105f8bff"
+              "uuid": "c7a72a3c-23cd-486c-ac06-0d46684a461e"
             },
             {
               "@type": "WorkflowRoute",
-              "name": "Create Feed List -> Compare Last Pull Time",
-              "targetStep": "/api/3/workflow_steps/92a79cd0-748e-44cf-ab85-e6c97ee71fb9",
-              "sourceStep": "/api/3/workflow_steps/768fac14-ffed-424b-9feb-38cf37815a1f",
+              "name": "Create Feed List -> check last pull time",
+              "targetStep": "/api/3/workflow_steps/8aa77230-1550-4458-8ede-2d4fb39cfa4d",
+              "sourceStep": "/api/3/workflow_steps/0207a002-f452-494c-85b0-a36b1a2a84ae",
               "label": null,
               "isExecuted": false,
-              "uuid": "387afad2-4422-4ee5-aca8-7161c9d7a461"
+              "uuid": "2b605b4e-092c-4e54-a2b8-ac2b8d1326b8"
             },
             {
               "@type": "WorkflowRoute",
-              "name": "Compare Last Pull Time -> Create Record",
-              "targetStep": "/api/3/workflow_steps/65cb7bd3-77af-41af-989f-fbb0a0f146cf",
-              "sourceStep": "/api/3/workflow_steps/92a79cd0-748e-44cf-ab85-e6c97ee71fb9",
+              "name": "check last pull time -> Create Record",
+              "targetStep": "/api/3/workflow_steps/44deb7e7-5fc8-4c66-8598-a283ba5220b8",
+              "sourceStep": "/api/3/workflow_steps/8aa77230-1550-4458-8ede-2d4fb39cfa4d",
               "label": null,
               "isExecuted": false,
-              "uuid": "90ee2b96-9d79-4b6f-b37f-8640982742e3"
+              "uuid": "cfa0c1fb-c978-4c27-b086-12e414dcafc9"
             },
             {
               "@type": "WorkflowRoute",
-              "name": "Compare Last Pull Time -> Save Result",
-              "targetStep": "/api/3/workflow_steps/a1b14baf-82e3-43a1-ad49-a5b96cbc422e",
-              "sourceStep": "/api/3/workflow_steps/92a79cd0-748e-44cf-ab85-e6c97ee71fb9",
+              "name": "check last pull time -> Save Result",
+              "targetStep": "/api/3/workflow_steps/40f24b43-0d05-45be-ae11-ca6a0f312953",
+              "sourceStep": "/api/3/workflow_steps/8aa77230-1550-4458-8ede-2d4fb39cfa4d",
               "label": null,
               "isExecuted": false,
-              "uuid": "955102b6-0725-4589-8e9b-31985775d4bd"
+              "uuid": "12e6ca24-f996-4e91-bdd5-c92b323cfba3"
             }
           ],
           "priority": "/api/3/picklists/2b563c61-ae2c-41c0-a85a-c9709585e3f2",
-          "uuid": "1e0bcb3a-487a-44ab-a1a1-f7219bfc56c4",
+          "uuid": "8cf54de1-d248-4565-b0c8-26dc64fd380b",
           "recordTags": [
             "dataingestion",
             "create",
             "fetch",
             "aws-feed"
           ],
-          "id": "142",
+          "id": "504",
           "createUser": "/api/3/people/3451141c-bac6-467c-8d72-85e0fab569ce",
-          "createDate": 1644564835.171505,
+          "createDate": 1645680128.092139,
           "modifyUser": "/api/3/people/3451141c-bac6-467c-8d72-85e0fab569ce",
-          "modifyDate": 1645594744.679107,
+          "modifyDate": 1645699942.700748,
           "owners": [],
           "isPrivate": false,
           "deletedAt": null
@@ -455,81 +455,11 @@
           "remoteExecutableFlag": false,
           "parameters": [],
           "synchronous": false,
-          "lastModifyDate": 1644925644,
+          "lastModifyDate": 1644922634,
           "collection": "/api/3/workflow_collections/06ea4537-cfb2-4131-b3e1-0b1377b9ae73",
           "versions": [],
-          "triggerStep": "/api/3/workflow_steps/8facd8ad-5f92-41fa-a776-e363cf3cd4f1",
+          "triggerStep": "/api/3/workflow_steps/e4440ba7-e269-4b6e-ab63-a63c892c7e16",
           "steps": [
-            {
-              "@type": "WorkflowStep",
-              "name": "Fetch Indicators",
-              "description": null,
-              "arguments": {
-                "arguments": {
-                  "lastPullTime": "{{vars.lastPullTime}}"
-                },
-                "apply_async": false,
-                "step_variables": [],
-                "workflowReference": "/api/3/workflows/1e0bcb3a-487a-44ab-a1a1-f7219bfc56c4"
-              },
-              "status": null,
-              "top": "360",
-              "left": "760",
-              "stepType": "/api/3/workflow_step_types/74932bdc-b8b6-4d24-88c4-1a4dfbc524f3",
-              "uuid": "4e9d7a78-4f33-46e7-a3de-df8d1a78eb67"
-            },
-            {
-              "@type": "WorkflowStep",
-              "name": "Start",
-              "description": null,
-              "arguments": {
-                "step_variables": {
-                  "input": {
-                    "params": []
-                  }
-                }
-              },
-              "status": null,
-              "top": "20",
-              "left": "20",
-              "stepType": "/api/3/workflow_step_types/b348f017-9a94-471f-87f8-ce88b6a7ad62",
-              "uuid": "8facd8ad-5f92-41fa-a776-e363cf3cd4f1"
-            },
-            {
-              "@type": "WorkflowStep",
-              "name": "Configuration",
-              "description": null,
-              "arguments": {
-                "fetchTime": "0",
-                "pullTimeMacro": "AWSFeedLastPullTime_{{vars['audit_info']['cyops_playbook_iri'].split('/')[-1].replace('-','_')}}"
-              },
-              "status": null,
-              "top": "100",
-              "left": "180",
-              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
-              "uuid": "99547bdf-281c-463a-bd5d-135b66fc1452"
-            },
-            {
-              "@type": "WorkflowStep",
-              "name": "Update Pull Time",
-              "description": null,
-              "arguments": {
-                "params": {
-                  "macro": "{{vars.pullTimeMacro}}",
-                  "value": "{{vars.steps.Fetch_Indicators.currentPullTime}}"
-                },
-                "version": "3.2.0",
-                "connector": "cyops_utilities",
-                "operation": "updatemacro",
-                "operationTitle": "CyOPs: Update Macro",
-                "step_variables": []
-              },
-              "status": null,
-              "top": "460",
-              "left": "960",
-              "stepType": "/api/3/workflow_step_types/0109f35d-090b-4a2b-bd8a-94cbc3508562",
-              "uuid": "b1b35bd0-ea52-46f7-8d58-3301305b646e"
-            },
             {
               "@type": "WorkflowStep",
               "name": "Get Macro Value",
@@ -550,7 +480,28 @@
               "top": "180",
               "left": "380",
               "stepType": "/api/3/workflow_step_types/0109f35d-090b-4a2b-bd8a-94cbc3508562",
-              "uuid": "be4cc630-10d7-4ed6-8e9a-12c14e732fea"
+              "uuid": "2a659148-0e3b-446a-ac91-2294e766d48d"
+            },
+            {
+              "@type": "WorkflowStep",
+              "name": "Update Pull Time",
+              "description": null,
+              "arguments": {
+                "params": {
+                  "macro": "{{vars.pullTimeMacro}}",
+                  "value": "{{vars.steps.Fetch_Indicators.currentPullTime}}"
+                },
+                "version": "3.2.0",
+                "connector": "cyops_utilities",
+                "operation": "updatemacro",
+                "operationTitle": "CyOPs: Update Macro",
+                "step_variables": []
+              },
+              "status": null,
+              "top": "460",
+              "left": "960",
+              "stepType": "/api/3/workflow_step_types/0109f35d-090b-4a2b-bd8a-94cbc3508562",
+              "uuid": "3c99051a-fba0-4ce5-8d67-d5786f421da5"
             },
             {
               "@type": "WorkflowStep",
@@ -563,68 +514,117 @@
               "top": "260",
               "left": "560",
               "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
-              "uuid": "f3735b46-c356-40ce-a1d2-35d9e9b2d363"
+              "uuid": "850e0d5b-b7e2-408a-b536-f28a69480a35"
+            },
+            {
+              "@type": "WorkflowStep",
+              "name": "Fetch Indicators",
+              "description": null,
+              "arguments": {
+                "arguments": {
+                  "lastPullTime": "{{vars.lastPullTime}}"
+                },
+                "apply_async": false,
+                "step_variables": [],
+                "workflowReference": "/api/3/workflows/8cf54de1-d248-4565-b0c8-26dc64fd380b"
+              },
+              "status": null,
+              "top": "360",
+              "left": "760",
+              "stepType": "/api/3/workflow_step_types/74932bdc-b8b6-4d24-88c4-1a4dfbc524f3",
+              "uuid": "baf2846d-055a-45bd-9f22-80ed45513a38"
+            },
+            {
+              "@type": "WorkflowStep",
+              "name": "Configuration",
+              "description": null,
+              "arguments": {
+                "fetchTime": "0",
+                "pullTimeMacro": "AWSFeedLastPullTime_{{vars['audit_info']['cyops_playbook_iri'].split('/')[-1].replace('-','_')}}"
+              },
+              "status": null,
+              "top": "100",
+              "left": "180",
+              "stepType": "/api/3/workflow_step_types/04d0cf46-b6a8-42c4-8683-60a7eaa69e8f",
+              "uuid": "e2b8eb5b-6285-43fc-84d9-e105efaecb81"
+            },
+            {
+              "@type": "WorkflowStep",
+              "name": "Start",
+              "description": null,
+              "arguments": {
+                "step_variables": {
+                  "input": {
+                    "params": []
+                  }
+                }
+              },
+              "status": null,
+              "top": "20",
+              "left": "20",
+              "stepType": "/api/3/workflow_step_types/b348f017-9a94-471f-87f8-ce88b6a7ad62",
+              "uuid": "e4440ba7-e269-4b6e-ab63-a63c892c7e16"
             }
           ],
           "routes": [
             {
               "@type": "WorkflowRoute",
               "name": "Get Macro Value -> Extract Value from Response",
-              "targetStep": "/api/3/workflow_steps/f3735b46-c356-40ce-a1d2-35d9e9b2d363",
-              "sourceStep": "/api/3/workflow_steps/be4cc630-10d7-4ed6-8e9a-12c14e732fea",
+              "targetStep": "/api/3/workflow_steps/850e0d5b-b7e2-408a-b536-f28a69480a35",
+              "sourceStep": "/api/3/workflow_steps/2a659148-0e3b-446a-ac91-2294e766d48d",
               "label": null,
               "isExecuted": false,
-              "uuid": "eb8dfe4c-c794-464c-81ce-d8002cbc205a"
+              "uuid": "670d4b0c-bca3-45e7-af7c-c3f3b0c7dbcc"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Start -> Configuration",
-              "targetStep": "/api/3/workflow_steps/99547bdf-281c-463a-bd5d-135b66fc1452",
-              "sourceStep": "/api/3/workflow_steps/8facd8ad-5f92-41fa-a776-e363cf3cd4f1",
+              "targetStep": "/api/3/workflow_steps/e2b8eb5b-6285-43fc-84d9-e105efaecb81",
+              "sourceStep": "/api/3/workflow_steps/e4440ba7-e269-4b6e-ab63-a63c892c7e16",
               "label": null,
               "isExecuted": false,
-              "uuid": "c3cefa38-eba9-4d94-acfe-9d9aa2ad9edf"
+              "uuid": "4d261c18-bc79-4c0a-98cd-61fed29feb1d"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Configuration -> Get Macro Value",
-              "targetStep": "/api/3/workflow_steps/be4cc630-10d7-4ed6-8e9a-12c14e732fea",
-              "sourceStep": "/api/3/workflow_steps/99547bdf-281c-463a-bd5d-135b66fc1452",
+              "targetStep": "/api/3/workflow_steps/2a659148-0e3b-446a-ac91-2294e766d48d",
+              "sourceStep": "/api/3/workflow_steps/e2b8eb5b-6285-43fc-84d9-e105efaecb81",
               "label": null,
               "isExecuted": false,
-              "uuid": "be48611a-1913-4a49-a855-bbe76204769f"
+              "uuid": "cd285385-241c-498a-bdfd-9bb01f3d68aa"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Fetch Indicators -> Update Pull Time",
-              "targetStep": "/api/3/workflow_steps/b1b35bd0-ea52-46f7-8d58-3301305b646e",
-              "sourceStep": "/api/3/workflow_steps/4e9d7a78-4f33-46e7-a3de-df8d1a78eb67",
+              "targetStep": "/api/3/workflow_steps/3c99051a-fba0-4ce5-8d67-d5786f421da5",
+              "sourceStep": "/api/3/workflow_steps/baf2846d-055a-45bd-9f22-80ed45513a38",
               "label": null,
               "isExecuted": false,
-              "uuid": "0ccd54fe-3f25-46c1-a8fe-316ba05ae1fa"
+              "uuid": "ec46b96c-2b15-4350-9693-f0974f15db60"
             },
             {
               "@type": "WorkflowRoute",
               "name": "Extract Value from Response -> Fetch Indicators",
-              "targetStep": "/api/3/workflow_steps/4e9d7a78-4f33-46e7-a3de-df8d1a78eb67",
-              "sourceStep": "/api/3/workflow_steps/f3735b46-c356-40ce-a1d2-35d9e9b2d363",
+              "targetStep": "/api/3/workflow_steps/baf2846d-055a-45bd-9f22-80ed45513a38",
+              "sourceStep": "/api/3/workflow_steps/850e0d5b-b7e2-408a-b536-f28a69480a35",
               "label": null,
               "isExecuted": false,
-              "uuid": "556ddf3a-0656-41c3-8204-2d98290a734e"
+              "uuid": "4894f4d3-26ba-4da0-b199-53ca0e8766ed"
             }
           ],
           "priority": "/api/3/picklists/2b563c61-ae2c-41c0-a85a-c9709585e3f2",
-          "uuid": "6bdc1ce7-2368-4169-8bb2-5ae86c75aa37",
+          "uuid": "c412fd22-ee93-4b98-af80-6ce24fb7b5d2",
           "recordTags": [
             "dataingestion",
             "ingest",
             "aws-feed"
           ],
-          "id": "143",
+          "id": "503",
           "createUser": "/api/3/people/3451141c-bac6-467c-8d72-85e0fab569ce",
-          "createDate": 1644564835.303467,
+          "createDate": 1645680127.983212,
           "modifyUser": "/api/3/people/3451141c-bac6-467c-8d72-85e0fab569ce",
-          "modifyDate": 1645594744.688012,
+          "modifyDate": 1645699942.702085,
           "owners": [],
           "isPrivate": false,
           "deletedAt": null
