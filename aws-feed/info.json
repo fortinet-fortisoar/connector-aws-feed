@@ -125,6 +125,16 @@
       "annotation": "get_indicators",
       "description": "Retrieve list of all indicators form AWS feed",
       "parameters": [
+        {
+          "title": "Modified After",
+          "name": "last_pull_time",
+          "visible": true,
+          "required": false,
+          "editable": true,
+          "type": "datetime",
+          "tooltip": "Enter Last Pull time. AWS feed data will be returned only if the feed has been refreshed after this time.",
+          "description": "Enter Last Pull time. AWS feed data will be returned only if the feed has been refreshed after this time."
+        }
       ],
       "enabled": true,
       "output_schema": {
