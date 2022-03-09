@@ -8,7 +8,7 @@
   "version": "1.0.0",
   "category": "Threat Intelligence",
   "tags": [
-    "threatintel-inbound"
+    "ThreatIntel"
   ],
   "ingestion_supported": true,
   "ingestion_modes": [
