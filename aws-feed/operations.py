@@ -79,9 +79,16 @@ def filter_resp(config, resp):
             prefixes = [item for item in resp.get('prefixes') if item["region"] in aws_regions]
             ipv6_prefixes = [item for item in resp.get('ipv6_prefixes') if item["region"] in aws_regions]
         else:
-            return resp
-        resp['prefixes'] = prefixes
-        resp['ipv6_prefixes'] = ipv6_prefixes
+            prefixes = resp.get('prefixes')
+            ipv6_prefixes = resp.get('ipv6_prefixes')
+
+        seen = set()
+        prefixes_records = [x for x in prefixes if
+                            [x['ip_prefix'].replace(" ", "") not in seen, seen.add(x['ip_prefix'].replace(" ", ""))][0]]
+        ipv6_prefixes_record = [x for x in ipv6_prefixes if [x['ipv6_prefix'].replace(" ", "") not in seen,
+                                                             seen.add(x['ipv6_prefix'].replace(" ", ""))][0]]
+        resp['prefixes'] = prefixes_records
+        resp['ipv6_prefixes'] = ipv6_prefixes_record
         return resp
     except Exception as Err:
         logger.exception(Err)
