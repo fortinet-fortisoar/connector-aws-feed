@@ -1,7 +1,7 @@
 {
   "name": "aws-feed",
   "label": "AWS Feed",
-  "description": "AWS Feed Integration",
+  "description": "Amazon Web Services (AWS) publishes its current IP address ranges in JSON format. This connector facilitates automated operations to fetch these indicators and ingestion of daily threat feeds. This connector has a dependency on the <a href=\"/content-hub/all-content/?contentType=solutionpack&amp;tag=ThreatIntelManagement\" target=\"_blank\" rel=\"noopener\">Threat Intel Management Solution Pack</a>. Install the Solution Pack before enabling ingestion of Threat Feeds from this source.",
   "publisher": "Fortinet",
   "cs_approved": true,
   "cs_compatible": true,
