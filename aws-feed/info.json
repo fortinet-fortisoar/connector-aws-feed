@@ -20,7 +20,7 @@
       "indicators"
     ]
   },
-  "help_online": "",
+  "help_online": "https://docs.fortinet.com/document/fortisoar/1.0.0/aws-feed/241/aws-feed-v1-0-0",
   "icon_small_name": "small.png",
   "icon_large_name": "large.png",
   "configuration": {
@@ -123,7 +123,7 @@
       "title": "Get Indicators",
       "category": "investigation",
       "annotation": "get_indicators",
-      "description": "Retrieve list of all indicators form AWS feed",
+      "description": "Retrieves a list of all indicators from AWS Feed. You can also filter the indicators retrieved from AWS Feed based on the last pull time you have specified.",
       "parameters": [
         {
           "title": "Modified After",
@@ -132,8 +132,8 @@
           "required": false,
           "editable": true,
           "type": "datetime",
-          "tooltip": "Enter Last Pull time. AWS feed data will be returned only if the feed has been refreshed after this time.",
-          "description": "Enter Last Pull time. AWS feed data will be returned only if the feed has been refreshed after this time."
+          "tooltip": "(Optional) Specify the time the feeds were last pulled from AWS Feed. In this case, the data will be returned from AWS Feed only if the feed has been refreshed after the specified time. ",
+          "description": "(Optional) Specify the time the feeds were last pulled from AWS Feed. In this case, the data will be returned from AWS Feed only if the feed has been refreshed after the specified time. "
         }
       ],
       "enabled": true,
